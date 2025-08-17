@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tesla VIP – حاسبة التوصيل</title>
+  <style>
+    :root { --bg:#0f172a; --card:#111827; --txt:#e5e7eb; --muted:#9ca3af; --pri:#22c55e; }
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,Segoe UI,Arial;background:var(--bg);color:var(--txt);display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+    .card{width:100%;max-width:420px;background:var(--card);border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    .brand{display:flex;gap:10px;align-items:center;margin-bottom:14px}
+    .badge{background:#065f46;color:#a7f3d0;font-size:12px;padding:4px 10px;border-radius:999px}
+    .h1{font-size:20px;margin:0} .muted{color:var(--muted);font-size:13px}
+    label{font-size:14px;margin:10px 0 6px;display:block}
+    input[type="number"]{width:100%;padding:12px;border:1px solid #374151;border-radius:10px;background:#0b1220;color:var(--txt);outline:none}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    button{width:100%;margin-top:14px;padding:12px 14px;border:0;border-radius:12px;background:var(--pri);color:#062; font-weight:700; cursor:pointer}
+    button:active{transform:scale(.99)}
+    .result{margin-top:12px;padding:12px;border-radius:12px;background:#0b1220;border:1px dashed #334155}
+    .result b{font-size:18px}
+    .tiny{font-size:12px;color:var(--muted);margin-top:6px}
+    .split{display:flex;gap:10px;align-items:center;justify-content:space-between}
+    .pill{background:#0b1220;border:1px solid #374151;border-radius:999px;padding:6px 10px;font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">
+      <div class="badge">Tesla VIP</div>
+      <h1 class="h1">حاسبة سعر التوصيل</h1>
+    </div>
+    <div class="muted">احسب السعر بسرعة وفق تسعيرة الشركة.</div>
+
+    <label for="km">عدد الكيلومترات</label>
+    <input id="km" type="number" min="0" step="0.1" placeholder="مثال: 7.5" />
+
+    <div class="row">
+      <div>
+        <label for="ppk">سعر الكيلومتر (دينار)</label>
+        <input id="ppk" type="number" min="0" step="0.01" />
+      </div>
+      <div>
+        <label for="minFare">الحد الأدنى (دينار)</label>
+        <input id="minFare" type="number" min="0" step="0.1" />
+      </div>
+    </div>
+
+    <button id="calc">احسب السعر</button>
+
+    <div class="result" id="result" hidden>
+      <div class="split">
+        <span>المجموع المستحق</span>
+        <b id="total">0.00 د.أ</b>
+      </div>
+      <div class="tiny" id="breakdown"></div>
+    </div>
+
+    <div class="tiny">الإعدادات تُحفَظ تلقائياً على جهازك.</div>
+    <div class="split" style="margin-top:8px">
+      <span class="pill">العملة: دينار أردني</span>
+      <span class="pill" id="policy">0.35 د/كم — حد أدنى 3 د.أ</span>
+    </div>
+  </div>
+
+  <script>
+    const el = id => document.getElementById(id);
+    const km = el('km'), ppk = el('ppk'), minFare = el('minFare');
+    const result = el('result'), total = el('total'), breakdown = el('breakdown'), policy = el('policy');
+
+    // قيم Tesla VIP الافتراضية
+    const DEFAULTS = { ppk: 0.35, min: 3.0 };
+
+    // تحميل/حفظ محلي
+    const load = () => {
+      const saved = JSON.parse(localStorage.getItem('teslaVipFare') || 'null');
+      const pricePerKm = saved?.ppk ?? DEFAULTS.ppk;
+      const min = saved?.min ?? DEFAULTS.min;
+      ppk.value = pricePerKm.toFixed(2);
+      minFare.value = min.toFixed(2);
+      policy.textContent = `${ppk.value} د/كم — حد أدنى ${minFare.value} د.أ`;
+    };
+    const save = () => {
+      localStorage.setItem('teslaVipFare', JSON.stringify({ ppk: +ppk.value || DEFAULTS.ppk, min: +minFare.value || DEFAULTS.min }));
+      policy.textContent = `${(+ppk.value).toFixed(2)} د/كم — حد أدنى ${(+minFare.value).toFixed(2)} د.أ`;
+    };
+
+    ppk.addEventListener('input', save);
+    minFare.addEventListener('input', save);
+
+    el('calc').addEventListener('click', () => {
+      const d = Math.max(0, +km.value || 0);
+      const pricePerKm = +ppk.value || DEFAULTS.ppk;
+      const min = +minFare.value || DEFAULTS.min;
+
+      if (d <= 0) {
+        result.hidden = false;
+        total.textContent = '—';
+        breakdown.textContent = 'أدخل مسافة صحيحة أكبر من صفر.';
+        return;
+      }
+
+      let raw = d * pricePerKm;
+      const appliedMin = raw < min;
+      let due = appliedMin ? min : raw;
+
+      total.textContent = `${due.toFixed(2)} د.أ`;
+      breakdown.textContent = appliedMin
+        ? `الحساب: ${d.toFixed(2)} كم × ${pricePerKm.toFixed(2)} = ${raw.toFixed(2)} د.أ < الحد الأدنى ${min.toFixed(2)} → المبلغ ${min.toFixed(2)} د.أ`
+        : `الحساب: ${d.toFixed(2)} كم × ${pricePerKm.toFixed(2)} = ${due.toFixed(2)} د.أ`;
+      result.hidden = false;
+    });
+
+    load();
+  </script>
+</body>
+</html>
