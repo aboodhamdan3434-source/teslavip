@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>Tesla VIP Delivery</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f4f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #fff;
+      padding: 30px 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 320px;
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: #007bff;
+    }
+    .logo img {
+      width: 40px;
+      height: 40px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background: #007bff;
+      color: #fff;
+      padding: 12px;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .result {
+      margin-top: 15px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      🚚 Tesla VIP Delivery
+    </div>
+    <input type="number" id="km" placeholder="ادخل عدد الكيلومترات">
+    <button onclick="calculateFare()">احسب السعر</button>
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    const pricePerKm = 0.35; // سعر الكيلومتر 35 قرش
+    const minFare = 3;       // الحد الأدنى 3 دنانير
+
+    function calculateFare() {
+      const km = document.getElementById("km").value;
+      if(km <= 0) {
+        document.getElementById("result").innerText = "⚠️ أدخل عدد كيلومترات صحيح";
+        return;
+      }
+      let fare = km * pricePerKm;
+      if (fare < minFare) fare = minFare;
+      document.getElementById("result").innerText = `💵 السعر: ${fare.toFixed(2)} دينار`;
+    }
+  </script>
+</body>
+</html>
